@@ -4,15 +4,12 @@ from .forms import HouseChoiceForm
 from django.core.paginator import Paginator
 from django.http import HttpResponseRedirect
 
-
 from fake_useragent import UserAgent
 import requests
 from bs4 import BeautifulSoup
 import re
 
-# Create your views here.
-
-
+# list all houses result
 def house_index(request):
     form = HouseChoiceForm()
     house_list = HouseInfo.objects.all().order_by('-add_date')
@@ -23,29 +20,50 @@ def house_index(request):
 
         return render(request, 'homelink/index.html',
                       {'page_obj': page_obj, 'paginator': paginator,
-                       'is_paginated': True, 'form': form,})
+                       'is_paginated': True, 'form': form, })
     else:
-        return render(request,'homelink/index.html', {'form': form,})
+        return render(request, 'homelink/index.html', {'form': form, })
 
+# fetch all houses result
+def house_fetch(request):
+    form = HouseChoiceForm()
+    return render(request, 'homelink/fetch.html', {'form': form, })
+'''
+    house_list = HouseInfo.objects.all().order_by('-add_date')
+    if house_list:
+        paginator = Paginator(house_list, 20)
+        page = request.GET.get('page')
+        page_obj = paginator.get_page(page)
 
+        return render(request, 'homelink/fetch.html',
+                      {'page_obj': page_obj, 'paginator': paginator,
+                       'is_paginated': True, 'form': form, })
+    else:
+        return render(request, 'homelink/fetch.html', {'form': form, })
+'''
+
+# invoke spider
 def house_spider(request):
     if request.method == 'POST':
+        # get form
         form = HouseChoiceForm(request.POST)
         if form.is_valid():
             district = form.cleaned_data.get('district')
             price = form.cleaned_data.get('price')
             bedroom = form.cleaned_data.get('bedroom')
-            url = 'https://sh.lianjia.com/ershoufang/{}/{}{}'.format(district, price, bedroom)
+            url = 'https://sh.lianjia.com/ershoufang/{}/{}{}'.format(
+                district, price, bedroom)
 
+            # invoke spider function
             home_spider = HomeLinkSpider(url)
             home_spider.get_max_page()
             home_spider.parse_page()
             home_spider.save_data_to_model()
-            return HttpResponseRedirect('/homelink/')
+            return HttpResponseRedirect('/')
     else:
-        return HttpResponseRedirect('/homelink/')
+        return HttpResponseRedirect('/')
 
-
+# the actual spider invoker
 class HomeLinkSpider(object):
     def __init__(self, url):
         self.ua = UserAgent()
@@ -53,18 +71,18 @@ class HomeLinkSpider(object):
         self.data = list()
         self.url = url
 
-    def get_max_page(self):
+    def get_max_page(self):       # get total Pages of the result
         response = requests.get(self.url, headers=self.headers)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
             a = soup.select('div[class="page-box house-lst-page-box"]')
-            max_page = eval(a[0].attrs["page-data"])["totalPage"] # 使用eval是字符串转化为字典格式
+            max_page = eval(a[0].attrs["page-data"])["totalPage"]  # 使用eval是字符串转化为字典格式
             return max_page
         else:
             print("请求失败 status:{}".format(response.status_code))
             return None
 
-    def parse_page(self):
+    def parse_page(self):           # loop each page "sellListContent" for record list "li"
         max_page = self.get_max_page()
         for i in range(1, max_page + 1):
             url = "{}pg{}/".format(self.url, i)
@@ -74,33 +92,39 @@ class HomeLinkSpider(object):
             li_list = ul[0].select("li")
             for li in li_list:
                 detail = dict()
-                detail['title'] = li.select('div[class="title"]')[0].get_text()
 
-                # 大华锦绣华城(九街区)  | 3室2厅 | 76.9平米 | 南 | 其他 | 无电梯
+                detail['house_url'] = li.select('div[class="title"]')[0].find('a').attrs['href']
+
+                detail['title'] = li.select('div[class="title"]')[0].get_text()
+                
+                # new house_info:          2室2厅 | 71.02平米 | 南 北 | 简装 | 高楼层(共6层) | 1996年建 | 板楼
                 house_info = li.select('div[class="houseInfo"]')[0].get_text()
                 house_info_list = house_info.split(" | ")
 
-                detail['house'] = house_info_list[0]
-                detail['bedroom'] = house_info_list[1]
-                detail['area'] = house_info_list[2]
-                detail['direction'] = house_info_list[3]
+                detail['bedroom'] = house_info_list[0]
+                detail['area'] = house_info_list[1]
+                detail['direction'] = house_info_list[2]
 
-                # 低楼层(共7层)2006年建板楼  -  张江. 提取楼层，年份和板块
+                #提取楼层，年份和板块: 南新东园 - 外高桥
                 position_info = li.select('div[class="positionInfo"]')[0].get_text().split(' - ')
 
                 floor_pattern = re.compile(r'.+\)')
-                match1 = re.search(floor_pattern, position_info[0])  # 从字符串任意位置匹配
+                match1 = re.search(floor_pattern, house_info_list[4])  # 从字符串任意位置匹配
+
                 if match1:
                     detail['floor'] = match1.group()
                 else:
                     detail['floor'] = "未知"
 
                 year_pattern = re.compile(r'\d{4}')
-                match2 = re.search(year_pattern, position_info[0])  # 从字符串任意位置匹配
+                match2 = re.search(year_pattern, house_info_list[5])  # 从字符串任意位置匹配
+
                 if match2:
                     detail['year'] = match2.group()
                 else:
                     detail['year'] = "未知"
+
+                detail['house'] = position_info[0]
                 detail['location'] = position_info[1]
 
                 # 650万，匹配650
@@ -112,6 +136,12 @@ class HomeLinkSpider(object):
                 unit_price = li.select('div[class="unitPrice"]')[0].get_text()
                 detail['unit_price'] = re.search(price_pattern, unit_price).group()
                 self.data.append(detail)
+
+                # image URL
+                images = li.select("img", {"class": "lj-lazy"})
+                for image in images:
+                    if image['class'] == ['lj-lazy']:
+                        detail['image_url'] = image['data-original']
 
     def save_data_to_model(self):
         for item in self.data:
@@ -126,7 +156,6 @@ class HomeLinkSpider(object):
             new_item.location = item['location']
             new_item.total_price = item['total_price']
             new_item.unit_price = item['unit_price']
+            new_item.image_url = item['image_url']
+            new_item.house_url = item['house_url']
             new_item.save()
-
-
-

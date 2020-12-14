@@ -2,7 +2,6 @@ from django.db import models
 
 # Create your models here.
 
-
 class HouseInfo(models.Model):
     title = models.CharField(max_length=256, verbose_name='标题')
     house = models.CharField(max_length=20, verbose_name='小区')
@@ -14,9 +13,10 @@ class HouseInfo(models.Model):
     location = models.CharField(max_length=10, verbose_name='位置')
     total_price = models.IntegerField(verbose_name='总结(万元)')
     unit_price = models.IntegerField(verbose_name='单价(元/平方米)')
-
+    image_url = models.CharField(max_length=512, verbose_name='图片')
     add_date = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     mod_date = models.DateTimeField(auto_now=True, verbose_name="修改日期")
+    house_url = models.CharField(max_length=512, verbose_name='house_url')
 
     def __str__(self):
         return "{}-{}-{}".format(self.house,self.bedroom, self.total_price)

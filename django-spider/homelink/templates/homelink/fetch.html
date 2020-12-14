@@ -1,0 +1,18 @@
+{% extends "homelink/base.html" %}
+
+{% block title %}Update Records{% endblock %}
+
+{% block content %}
+
+<h3>Scrape ShangHai Second Hand Info</h3>
+<form method="POST" class="form-horizontal" role='form' action="{% url 'homelink:house_spider' %}">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <div class="form-group">
+    <div class="col-md-12">
+      <button type="submit" class="btn btn-primary form-control">Start Ccraping</button>
+    </div>
+  </div>
+</form>
+
+{% endblock %}
