@@ -71,16 +71,17 @@ for section in rfdSections:
 
             if (not timeSensitiveDeal and votes < 5*daysOld and posts < 10*daysOld) or votes < 0: continue
 
-            link = rfdUrl+titleSoup.find("a", {"class" : "topic_title_link"})['href']
+            # this is topic tile link
+            topicUrl = rfdUrl+titleSoup.find("a", {"class" : "topic_title_link"})['href']
 
             # Check whether post is in the database.
-            c.execute('''SELECT COUNT(*) FROM rfd WHERE url=?''', (link,))
+            c.execute('''SELECT COUNT(*) FROM rfd WHERE topicurl=?''', (topicUrl,))
             if c.fetchone()[0] > 0: continue
 
-            print("title="+ title + "  link=" + link + "  post= " + str(posts) + " vote=" + str(votes))
+            print("title="+ title + "  link=" + topicUrl + "  post= " + str(posts) + " vote=" + str(votes))
 
             # Fetch post contents
-            threadReq = Request(link, None, userAgent)
+            threadReq = Request(topicUrl, None, userAgent)
             threadContent = urlopen(threadReq, timeout=10).read().decode('utf-8', 'ignore')
             threadSoup = BeautifulSoup(threadContent, "lxml")
             for elem in threadSoup.findAll(['script', 'style']):
@@ -89,17 +90,26 @@ for section in rfdSections:
             dealSoup = threadSoup.find("div", {"class":"post_content"})
             if not dealSoup: continue
 
-            # Convert relative links to absolute links.
-            for a in dealSoup.findAll('a', href=True):
-                a['href'] = urljoin(rfdUrl, a['href'])
-#            args = ["mutt", "-e", "set content_type=text/html", "-s", str(posts) + "|" + str(votes) + ": " + title]
-#            args.extend(emails)
-#            p = Popen(args, stdin=PIPE)
-#            p.communicate(input=bytes('<a href="'+link+'"/a>'+str(dealSoup), 'utf-8'))
-#            if p.returncode != 0: continue
-#            print(p.returncode)
-            c.execute('''INSERT INTO rfd VALUES (?,?)''', (link,title,))
+            # Convert relative links to absolute links for rfd links
+            #for a in dealSoup.findAll('a', href=True):
+            #    a['href'] = urljoin(rfdUrl, a['href'])
+            
+            prodUrl=''
+            offerDetail = dealSoup.find("div", {"class":"post_offer"})
+            if not offerDetail: continue
+            for url in offerDetail.findAll('a', href=True):
+                prodUrl=url['href']
+                print(prodUrl)
+                break
+
+            # validate valid Url exist..
+            if not prodUrl: continue
+
+            # save to database if it's a good offer
+            c.execute('''INSERT INTO rfd VALUES (?,?,?)''', (topicUrl,title,prodUrl))
             print("write complete for "+title)
+
+# write to DB
 conn.commit()
 conn.close()
 print(cnt)
