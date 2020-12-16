@@ -34,7 +34,7 @@ def extract_record(item):
     return result
 
 def main(search_term):
-    driver = webdriver.Chrome('/home/auser/Downloads/chromedriver')
+    driver = webdriver.Chrome('./chromedriver')
     
     records = []
     url = get_url(search_term)
