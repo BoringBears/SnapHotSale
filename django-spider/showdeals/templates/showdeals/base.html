@@ -1,0 +1,41 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/frame.css' %}">
+
+<html lang="en">
+    <head>
+        <title>{% block title %} Snap Hot Sale{% endblock %} </title>
+        <meta charset="utf-8">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" type="text/css" rel="stylesheet">
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" type="text/css" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Page content of course! -->
+        <main>
+            {% block content %}
+            {% if error_message %}<p><strong>{{ error_message}}</strong></p>{% endif %}
+            {% endblock %}
+        </main>
+
+        <div class="card_blue_footer">
+            <table width="98%" align="center">
+                <tbody>  
+                    <tr>
+                        <td colspan="5" align="left">
+                            <span style="font-size: 11px; color: #fff;">
+                                <br>Affiliate Link Disclosure: Please be aware that some of the links on the SnapHotSale site are affiliate links which, at no additional cost to you, help support the site by earning a small commission should you click those links and make a purchase on the reailer's site. For more information on these links, see <a href="http://snaphotsale.com/AffiliateDisclosure">here</a>. This site is also part of Amazon's Associate Program. As an Amazon Associate commissions are earned from qualifying purchases.
+                            </span>
+                        </td>
+                    </tr>
+                    <tr><td><div style="line-height:10px;"><br></div></td></tr>
+                    <tr> 
+                        <td><span style="font-size: 14px; color: rgb(255, 255, 255);">© 2020 SnapHotSale.com. All Rights Reserved.</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </body>
+</html>

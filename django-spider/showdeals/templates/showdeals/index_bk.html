@@ -1,0 +1,137 @@
+{% extends "showdeals/base.html" %}
+
+{% block title %}Display All Deals{% endblock %}
+
+{% block content %}
+
+{% if page_obj %}
+<style>
+  my-table {
+    table-layout:fixed;
+    width:100%;
+  }
+  table.my-format tr td{ 
+    font-size: 10px; 
+  }
+  .fakeimg {
+        height: 100px;
+        width: 100px;
+        background: #fff;
+  }
+  </style>
+<div class="container">
+  <nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">SnapHotDeals</a>
+      </div>
+      <div class="collapse navbar-collapse" id="myNavbar">
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="#">DEALS</a></li>
+          <li><a href="#">COUPONS</a></li>
+          <li><a href="#">CONTACT US</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="row">
+    <div class="col-sm-8">
+      <table class="my-table my-format">
+        <thead>
+          <tr style="font-size: 14px;">
+            <th>Image</th>
+            <th>Title</th>
+            <th>Price</th>
+            <th>Original Price</th>
+            <th>Retailer</th>
+            <th>Timestamp</th>
+            <th>Source</th>
+            <th>Deal Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for deal in page_obj %}
+          <tr>
+            <td>
+              {% if deal.image %}
+                <img src="{{ deal.image  }}" style="max-width: 100px; max-height: 100px">
+              {% else %}
+              <div class="fakeimg">No Image</div>
+              {% endif %}
+            </td>
+            <td>
+              {{ deal.title }}
+            </td>
+            <td>
+              {{ deal.price }}
+            </td>
+            <td>
+              {{ deal.price_origin }}
+            </td>
+            <td>
+              {{ deal.retailer }}
+            </td>
+            <td>
+              {{ deal.timestamp }}
+            </td>
+            <td>
+              <a href="{{ deal.source }}" class="btn btn-primary btn-sm btn-info" role="button" target="_blank">Source</a>
+            </td>
+            <td>
+              <a href="{{ deal.link }}" class="btn btn-primary btn-sm btn-success" role="button" target="_blank">Get Deal</a>
+            </td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+      <hr class="hidden-sm hidden-md hidden-lg">
+
+
+      {% if is_paginated %}
+        <ul class="pagination">
+          {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          {% endif %}
+<!---
+          {% for i in paginator.page_range %}
+          {% if page_obj.number == i %}
+          <li class="page-item active"><span class="page-link"> {{ i }} <span class="sr-only">(current)</span></span></li>
+          {% else %}
+          <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+          {% endif %}
+          {% endfor %}
+-->
+          {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+          {% endif %}
+        </ul>
+      {% endif %}
+    </div>
+    <div class="col-sm-4">
+      <h3>Deals Of the Day</h3>
+      <ul class="nav nav-pills nav-stacked">
+        <li><a href="#">Amazon</a></li>
+        <li><a href="#">Ebay</a></li>
+        <li><a href="#">Costco</a></li>
+      </ul>
+      <hr class="hidden-sm hidden-md hidden-lg">
+    </div>
+  </div>
+
+{% else %}
+<p>No Deals by now...</p>
+{% endif %}
+
+
+</div>
+{% endblock %}

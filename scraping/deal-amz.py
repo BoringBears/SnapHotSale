@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 import time, datetime
+import re
+from urllib.parse import unquote
 
 SITE='www.amazon.com'
 source = 'https://'+SITE+'/s?k=lightning+deals'
@@ -9,25 +11,27 @@ source = 'https://'+SITE+'/s?k=lightning+deals'
 def get_url(term, page):
     ts = int(time.time())   
     pg = str(page)
-    #template = 'https://www.amazon.com/s?k={}&ref=nb_sb_noss_1'
     url = 'https://' + SITE + '/s?k='+ term.replace(' ','+') + '&page=' + pg + '&qid='+ str(ts) + '&ref=sr_pg_' + pg
-
     return url
 
 def extract_record(item):
     atag = item.h2.a
-    description = atag.text.strip()
-    item_url = 'https://' + SITE + atag.get('href')
+    title = atag.text.strip()
+
+    url_org = unquote(unquote('https://' + SITE + atag.get('href')))
+    #print(url_org)
+    m = re.search('/(?:dp|o|gp|-)\/(B[0-9]{2}[0-9A-Z]{7}|[0-9]{9}(?:X|[0-9]))/', url_org)
+    item_url = 'https://' + SITE + m.group(0)
 
     try:
         price_parent = item.find('span', 'a-price')
-        price = price_parent.find('span', 'a-offscreen').text
+        price = price_parent.find('span', 'a-offscreen').text.replace('$','')
     except AttributeError:
         return
         
     try:
         price_origin_parent = item.find('span', 'a-price a-text-price')
-        price_origin = price_origin_parent.find('span', 'a-offscreen').text
+        price_origin = price_origin_parent.find('span', 'a-offscreen').text.replace('$','')
     except AttributeError:
         price_origin = '0'
 
@@ -38,14 +42,13 @@ def extract_record(item):
         rating = ''
         review_count = ''
 
-    imageUrl = item.find('img', 's-image')
-    if imageUrl is not None:
-        imageUrl = imageUrl.get('src')
+    image_url = item.find('img', 's-image')
+    if image_url is not None:
+        image_url = image_url.get('src')
     else:
-        imageUrl = ''
-    #print(imageUrl)
+        image_url = ''
 
-    result = (description, price, price_origin, item_url, imageUrl)
+    result = (title, price, price_origin, item_url, image_url)
     return result
 
 def main(search_term):

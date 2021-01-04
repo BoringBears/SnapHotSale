@@ -10,6 +10,7 @@ import dateutil.parser
 from bs4 import BeautifulSoup
 import pandas as pd
 import datetime
+from urllib.parse import unquote
 
 now = datetime.datetime.now().replace(microsecond=0).isoformat()
 df = pd.DataFrame(columns = ['Title', 'Price', 'Price_Origin', 'Link', 'Image', 'Retailer', 'TimeStamp', 'Source'])
@@ -88,13 +89,13 @@ for section in rfdSections:
             # need to have URL
             link = offerDetail.find('dd', {"class":"deal_link"})
             if not link: continue
-            prodUrl = link.find('a').get('href')
+            prodUrl = unquote(unquote(link.find('a').get('href')))
             if not prodUrl: continue
 
             # try to get price
             priceText = offerDetail.find('dt', text="Price:");
             if priceText is not None: 
-                price = priceText.find_next("dd").text
+                price = priceText.find_next("dd").text.replace('$','')
             else:
                 price = ''
 

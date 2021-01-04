@@ -2,6 +2,8 @@ import pandas as pd
 import os
 import glob
 
+os.system('rm results/*.csv')
+
 os.system('python deal-amz.py')
 os.system('python deal-ebay.py')
 os.system('python deal-rfd.py')
